@@ -1,3 +1,5 @@
+// main.rs - CLI entry point placeholder
+
 fn main() {
-    println!("Hello, world!");
+    println!("Orbit CLI entry point - placeholder");
 }

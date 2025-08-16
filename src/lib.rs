@@ -1,0 +1,1 @@
+// lib.rs - Library crate placeholder
