@@ -1,1 +1,2 @@
-// cli/mod.rs - CLI module placeholder
+pub mod parser;
+pub mod commands;

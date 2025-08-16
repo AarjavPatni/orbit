@@ -1,1 +1,3 @@
-// lib.rs - Library crate placeholder
+pub mod cli;
+pub mod storage;
+pub mod error;
