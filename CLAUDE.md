@@ -1,7 +1,3 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
 Orbit is a distributed, fault-tolerant key-value store in Rust that can be driven entirely from a CLI, much like Redis but with built-in consensus for consistency across nodes. The project evolves in demoable milestones: starting with a single-node in-memory store, then layering on persistence, consensus (both per-transaction and replicated log approaches), and multiple transport backends.
@@ -14,22 +10,18 @@ Orbit is a distributed, fault-tolerant key-value store in Rust that can be drive
 3. **CLI tool/query language** - Redis-inspired interface for data operations
 
 ## Essential Commands
-
-### **MOST USED** (Development Cycle)
 ```bash
 cargo check                              # Fast compile check (fastest)
 cargo test                               # Run all tests  
 cargo run                                # Run the CLI
 cargo run -- get mykey                   # Run with CLI args
-cargo run -- set mykey myvalue           # Set key-value example
 ```
 
-### **YOU MUST** (Before Every Commit)
+### **MUST** Run Before Commit
 ```bash
 cargo fmt                                # Format code
 cargo clippy                             # Lint code (fix ALL warnings)
 cargo test                               # Ensure tests pass
-cargo fmt && cargo clippy && cargo test  # Check everything at once
 ```
 
 ### Build & Advanced Testing
@@ -64,11 +56,8 @@ fn complex_operation() -> Result<(), StoreError> {
 }
 ```
 
-## Architecture
+## Planned Architecture
 
-**Current**: Minimal single-file application with `main.rs` as entry point
-
-**Future Evolution** (as project grows):
 - `src/lib.rs` - Core library API
 - `src/store/` - Key-value store implementation  
 - `src/consensus/` - Raft and transaction consensus
@@ -76,31 +65,9 @@ fn complex_operation() -> Result<(), StoreError> {
 - `src/cli/` - Command-line interface
 - `tests/` - Integration tests for fault tolerance scenarios
 
-## Dependencies Strategy
 
-**Current**: No external dependencies (intentionally minimal)
+## **IMPORTANT** - Other Guidelines
 
-**When adding dependencies**:
-- **IMPORTANT**: Prioritize minimal, well-maintained crates
-- Check compatibility with Rust edition 2021
-- Verify license compatibility (prefer MIT/Apache-2.0)
-- Consider maintenance status and community adoption
-- Document rationale in commit messages
+- Prioritize minimal, well-maintained crates
+- See `ROADMAP.md` for complete milestone details
 
-## Current Status
-
-**Milestone 1: Basic CLI Store** 🚧 (In Progress)
-
-**YOU MUST** focus on these immediate tasks:
-- In-memory key-value operations (GET, SET, DEL, KEYS)
-- Command-line interface with argument parsing  
-- Basic error handling and validation
-
-**IMPORTANT**: See `ROADMAP.md` for complete milestone details
-
-
-## **CRITICAL REMINDERS**
-- This is a fault-tolerant distributed system project
-- Focus on consensus algorithms, network partitions, and data consistency
-- Ignore fault tolerance when implementing features
-- CLI operations should demonstrate distributed system concepts visibly
