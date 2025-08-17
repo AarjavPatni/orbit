@@ -13,149 +13,94 @@ Orbit is a distributed, fault-tolerant key-value store in Rust that can be drive
    - Log using sequence numbers
 3. **CLI tool/query language** - Redis-inspired interface for data operations
 
-## Common Development Commands
+## Essential Commands
 
-### Building and Running
+### **MOST USED** (Development Cycle)
 ```bash
-# Build the project
-cargo build
-
-# Build with optimizations (release mode)
-cargo build --release
-
-# Run the project
-cargo run
-
-# Run with release optimizations
-cargo run --release
+cargo check                              # Fast compile check (fastest)
+cargo test                               # Run all tests  
+cargo run                                # Run the CLI
+cargo run -- get mykey                   # Run with CLI args
+cargo run -- set mykey myvalue           # Set key-value example
 ```
 
-### Testing and Quality
+### **YOU MUST** (Before Every Commit)
 ```bash
-# Run all tests
-cargo test
+cargo fmt                                # Format code
+cargo clippy                             # Lint code (fix ALL warnings)
+cargo test                               # Ensure tests pass
+cargo fmt && cargo clippy && cargo test  # Check everything at once
+```
 
-# Run tests with output
-cargo test -- --nocapture
+### Build & Advanced Testing
+```bash
+cargo build                              # Development build
+cargo build --release                    # Optimized build
+cargo test -- --nocapture                # Tests with output
+cargo test test_name                     # Specific test
+cargo clippy --all-targets --all-features # Full lint check
+```
 
-# Run specific test
-cargo test test_name
+## Code Style (Rust-Specific)
 
-# Check code without building
-cargo check
+### **IMPORTANT** Guidelines
+- Use `Result<T, E>` for error handling, avoid panics in library code
+- Prefer `&str` over `String` for function parameters when possible
+- Use `#[derive(Debug)]` on all custom types
+- Follow Rust naming conventions: `snake_case` for functions/variables, `PascalCase` for types
 
-# Format code
-cargo fmt
+### Error Handling Patterns
+```rust
+// Prefer this pattern for the distributed store
+fn get_value(key: &str) -> Result<Option<String>, StoreError> {
+    // Implementation
+}
 
-# Lint code
-cargo clippy
-
-# Lint with all targets
-cargo clippy --all-targets --all-features
+// Chain results with ?
+fn complex_operation() -> Result<(), StoreError> {
+    let value = get_value("key")?;
+    validate_value(&value)?;
+    Ok(())
+}
 ```
 
 ## Architecture
 
-Currently a minimal single-file application with `main.rs` as the entry point. As the project grows, consider organizing code into:
-- `src/lib.rs` for library code
-- `src/modules/` for feature modules
-- `tests/` for integration tests
+**Current**: Minimal single-file application with `main.rs` as entry point
 
-## Dependencies
+**Future Evolution** (as project grows):
+- `src/lib.rs` - Core library API
+- `src/store/` - Key-value store implementation  
+- `src/consensus/` - Raft and transaction consensus
+- `src/network/` - TCP server and wire protocol
+- `src/cli/` - Command-line interface
+- `tests/` - Integration tests for fault tolerance scenarios
 
-No external dependencies currently. When adding dependencies, update Cargo.toml and consider:
-- Compatibility with rust edition 2021
-- License compatibility
-- Maintenance status of crates
+## Dependencies Strategy
 
-## Collaborative Learning Approach
+**Current**: No external dependencies (intentionally minimal)
 
-This project follows a collaborative learning methodology where Claude guides implementation while maximizing opportunities for hands-on learning and independent thinking.
+**When adding dependencies**:
+- **IMPORTANT**: Prioritize minimal, well-maintained crates
+- Check compatibility with Rust edition 2021
+- Verify license compatibility (prefer MIT/Apache-2.0)
+- Consider maintenance status and community adoption
+- Document rationale in commit messages
 
-### Learning Principles
-- **Collaborative brainstorming** - Discuss design decisions and architecture choices together
-- **Guided implementation** - Claude provides structure and guidance while the human implements core logic
-- **Learning by doing** - Focus on meaningful code contributions rather than routine boilerplate
-- **Educational insights** - Share relevant programming concepts and patterns during development
+## Current Status
 
-### Implementation Process
-1. **Planning phase** - Brainstorm approach, discuss trade-offs, and create implementation plan
-2. **Skeleton setup** - Claude creates minimal structure with TODO(human) markers for learning opportunities
-3. **Guided development** - Human implements key logic with Claude providing context and guidance
-4. **Integration** - Claude handles integration, testing, and routine tasks while sharing insights
+**Milestone 1: Basic CLI Store** 🚧 (In Progress)
 
-### When to Request Human Implementation
-Request human contributions for:
-- **Design decisions** - Error handling strategies, data structure choices, algorithm selection
-- **Business logic** - Core functionality with multiple valid approaches
-- **Key interfaces** - Function signatures and API design decisions
-- **Problem-solving** - Debugging challenges and optimization opportunities
-
-### Learning Moments
-- Provide educational insights before and after code implementation
-- Explain architectural patterns and their trade-offs
-- Connect individual code pieces to broader system design
-- Share Rust-specific best practices and idioms as they arise
-
-### Debugging and Problem Discovery Guidelines
-- **Let the human discover issues first** - Don't proactively find and fix problems
-- **Wait for explicit requests for help** - Only offer solutions when asked
-- **Guide through discovery** - Help analyze problems when the human encounters them
-- **Focus on teaching debugging skills** - Explain how to identify and approach issues
-- **Respect the learning process** - Allow natural problem-solving flow
-
-### Collaboration Boundaries
-- Human drives the implementation and discovers issues
-- Claude provides structure, guidance, and explanations when requested
-- Test failures and integration issues are learning opportunities for the human
-- Only intervene when explicitly asked for help or guidance
-
-This approach ensures deep understanding of the codebase while maintaining development momentum and respecting the human's learning autonomy.
-
-## Development Milestones
-
-See `ROADMAP.md` for detailed task breakdown. Current milestones:
-
-### Milestone 0: Project Setup (Complete)
-- Basic Rust project structure
-- Project documentation (CLAUDE.md, ROADMAP.md)
-
-### Milestone 1: Basic CLI Store (In Progress)
+**YOU MUST** focus on these immediate tasks:
 - In-memory key-value operations (GET, SET, DEL, KEYS)
-- Command-line interface with argument parsing
+- Command-line interface with argument parsing  
 - Basic error handling and validation
 
-### Milestone 2: Persistent Single Node
-- Append-only log for durability
-- Crash recovery and log replay
-- Log compaction to prevent infinite growth
+**IMPORTANT**: See `ROADMAP.md` for complete milestone details
 
-### Milestone 3: Network-Aware Single Node
-- TCP server for remote connections
-- Wire protocol for client-server communication
-- Concurrent connection handling
 
-### Milestone 4: Leader-Follower Replication
-- Basic replication between nodes
-- Simple leader election mechanism
-- Split-brain prevention
-
-### Milestone 5: Multi-Node Consensus (Raft)
-- Full Raft consensus implementation
-- Cluster membership management
-- Partition tolerance demonstration
-
-### Milestone 6: Transaction-Level Consensus
-- Per-transaction consensus approach
-- Performance comparison with log-based consensus
-- Runtime switching between approaches
-
-### Milestone 7: Advanced Fault Scenarios
-- Dynamic membership changes
-- Complex partition recovery
-- Chaos engineering and automated fault injection
-
-### Milestone 8: Production Features
-- Observability (metrics, logging, tracing)
-- Configuration management
-- Performance optimization
+## **CRITICAL REMINDERS**
+- This is a fault-tolerant distributed system project
+- Focus on consensus algorithms, network partitions, and data consistency
+- Ignore fault tolerance when implementing features
+- CLI operations should demonstrate distributed system concepts visibly
