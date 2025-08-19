@@ -22,18 +22,20 @@ pub enum Commands {
         #[arg(help = "The value to store")]
         value: String,
     },
-    
-    #[command(about = "Delete the key if it exists, else return an error informing the user the key doesn't exist")]
+
+    #[command(
+        about = "Delete the key if it exists, else return an error informing the user the key doesn't exist"
+    )]
     Del {
         #[arg(help = "The key to delete")]
         key: String,
     },
-    
+
     #[command(about = "List all the keys and optionally accept a filtering pattern")]
     Keys {
         #[arg(help = "The search pattern to find keys")]
         pattern: Option<String>,
-    }
+    },
 }
 
 impl Cli {

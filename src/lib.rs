@@ -1,3 +1,3 @@
 pub mod cli;
-pub mod storage;
 pub mod error;
+pub mod storage;
