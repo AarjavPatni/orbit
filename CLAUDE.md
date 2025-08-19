@@ -68,6 +68,6 @@ fn complex_operation() -> Result<(), StoreError> {
 
 ## **IMPORTANT** - Other Guidelines
 
-- Prioritize minimal, well-maintained crates
+- Prioritize minimal, well-maintained crates for dependencies
 - See `ROADMAP.md` for complete milestone details
 
