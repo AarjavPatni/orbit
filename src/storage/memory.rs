@@ -14,6 +14,12 @@ pub struct MemoryStore {
     data: HashMap<String, String>,
 }
 
+impl Default for MemoryStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MemoryStore {
     /// Create a new empty store
     pub fn new() -> Self {
@@ -29,8 +35,35 @@ impl MemoryStore {
         // Think about: What are the different wildcard scenarios we need to handle?
         // Consider: How can we break down pattern matching into logical cases?
 
-        // Temporary: match everything for testing
-        true
+        let wildcard_matches: Vec<_> = pattern.match_indices('*').map(|(idx, _)| idx).collect();
+
+        if wildcard_matches.len() == 1 {
+            let wildcard_loc = wildcard_matches[0];
+
+            if wildcard_loc == 0 {
+                let query: &str = &pattern[1..];
+                let query_matches: Vec<_> = key.match_indices(query).map(|(idx, _)| idx).collect();
+
+                if !query_matches.contains(&(key.len() - query.len())) {
+                    return false;
+                }
+            } else if wildcard_loc == pattern.len() - 1 {
+                let query: &str = &pattern[..pattern.len() - 1];
+                let query_matches: Vec<_> = key.match_indices(query).map(|(idx, _)| idx).collect();
+
+                if !query_matches.contains(&0) {
+                    return false;
+                }
+            } else {
+                // TODO: Implement logic for wildcards anywhere in the pattern
+                todo!()
+            }
+
+            true
+        } else {
+            // TODO: Implement logic for multiple wildcards
+            todo!()
+        }
     }
 }
 
@@ -240,13 +273,50 @@ mod tests {
             .set("session:abc".to_string(), "active".to_string())
             .unwrap();
 
-        // Since matches_pattern currently returns true for everything,
-        // this should return all keys for now
+        // Test prefix pattern matching
         let keys = store.keys(Some("user:*"));
 
-        assert_eq!(keys.len(), 3); // Will be 3 until we implement proper pattern matching
+        assert_eq!(keys.len(), 2); // Should only match user: prefixed keys
         assert!(keys.contains(&"user:1".to_string()));
         assert!(keys.contains(&"user:2".to_string()));
-        assert!(keys.contains(&"session:abc".to_string()));
+        assert!(!keys.contains(&"session:abc".to_string()));
+    }
+
+    #[test]
+    fn test_matches_pattern_prefix_wildcard() {
+        // Test patterns like "user:*" - should match keys that start with "user:"
+        assert!(MemoryStore::matches_pattern("user:123", "user:*"));
+        assert!(MemoryStore::matches_pattern("user:alice", "user:*"));
+        assert!(MemoryStore::matches_pattern("user:", "user:*"));
+        assert!(!MemoryStore::matches_pattern("session:abc", "user:*"));
+        assert!(!MemoryStore::matches_pattern("admin:user:123", "user:*"));
+    }
+
+    #[test]
+    fn test_matches_pattern_suffix_wildcard() {
+        // Test patterns like "*:123" - should match keys that end with ":123"
+        assert!(MemoryStore::matches_pattern("user:123", "*:123"));
+        assert!(MemoryStore::matches_pattern("session:123", "*:123"));
+        assert!(MemoryStore::matches_pattern(":123", "*:123"));
+        assert!(!MemoryStore::matches_pattern("user:456", "*:123"));
+        assert!(!MemoryStore::matches_pattern("user:123:extra", "*:123"));
+    }
+
+    #[test]
+    fn test_matches_pattern_exact_match() {
+        // When pattern has no wildcards, should match exactly
+        assert!(MemoryStore::matches_pattern("user:123", "*"));
+        assert!(MemoryStore::matches_pattern("any_key", "*"));
+        assert!(MemoryStore::matches_pattern("", "*"));
+    }
+
+    #[test]
+    fn test_matches_pattern_edge_cases() {
+        // Empty strings and edge cases
+        assert!(MemoryStore::matches_pattern("test", "test*"));
+        assert!(MemoryStore::matches_pattern("test", "*test"));
+        assert!(MemoryStore::matches_pattern("", "*"));
+        assert!(MemoryStore::matches_pattern("x", "*x"));
+        assert!(MemoryStore::matches_pattern("x", "x*"));
     }
 }
