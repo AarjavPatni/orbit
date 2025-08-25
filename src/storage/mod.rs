@@ -19,9 +19,10 @@ pub trait KeyValueStore {
     fn set(&mut self, key: String, value: String) -> Result<(), StoreError>;
 
     /// Delete a key
-    /// Returns Some(old_value) if key existed, None if it didn't
-    /// This is an idempotent operation - "success" means key doesn't exist
-    fn delete(&mut self, key: &str) -> Option<String>;
+    /// Returns Ok(Some(old_value)) if key existed, Ok(None) if key didn't exist
+    /// Returns Err for validation failures (InvalidKey)
+    /// This maintains idempotent behavior while allowing error reporting
+    fn delete(&mut self, key: &str) -> Result<Option<String>, StoreError>;
 
     /// List keys matching a pattern
     /// Pattern supports basic * wildcards for now

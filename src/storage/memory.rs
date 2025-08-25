@@ -28,6 +28,24 @@ impl MemoryStore {
         }
     }
 
+    /// Validate a key according to basic rules
+    fn validate_key(key: &str) -> Result<(), StoreError> {
+        if key.is_empty() {
+            return Err(StoreError::InvalidKey("Key cannot be empty".to_string()));
+        }
+        if key.len() > 512 {
+            return Err(StoreError::InvalidKey(
+                "Key too long (max 512 characters)".to_string(),
+            ));
+        }
+        if key.contains('\0') {
+            return Err(StoreError::InvalidKey(
+                "Key cannot contain null bytes".to_string(),
+            ));
+        }
+        Ok(())
+    }
+
     /// Helper function to check if a pattern matches a key
     /// For now, just supports * wildcard matching
     fn matches_pattern(key: &str, pattern: &str) -> bool {
@@ -69,6 +87,7 @@ impl MemoryStore {
 
 impl KeyValueStore for MemoryStore {
     fn get(&self, key: &str) -> Result<String, StoreError> {
+        Self::validate_key(key)?;
         match self.data.get(key) {
             Some(value) => Ok(value.clone()),
             None => Err(StoreError::KeyNotFound(key.to_string())),
@@ -76,12 +95,14 @@ impl KeyValueStore for MemoryStore {
     }
 
     fn set(&mut self, key: String, value: String) -> Result<(), StoreError> {
+        Self::validate_key(&key)?;
         self.data.insert(key, value);
         Ok(())
     }
 
-    fn delete(&mut self, key: &str) -> Option<String> {
-        self.data.remove(key)
+    fn delete(&mut self, key: &str) -> Result<Option<String>, StoreError> {
+        Self::validate_key(key)?;
+        Ok(self.data.remove(key))
     }
 
     fn keys(&self, pattern: Option<&str>) -> Vec<String> {
@@ -182,9 +203,11 @@ mod tests {
         // Delete the key
         let result = store.delete("delete_me");
 
-        // Should return the previous value
-        assert!(result.is_some());
-        assert_eq!(result.unwrap(), "goodbye");
+        // Should return Ok(Some(previous_value))
+        assert!(result.is_ok());
+        let deleted_value = result.unwrap();
+        assert!(deleted_value.is_some());
+        assert_eq!(deleted_value.unwrap(), "goodbye");
 
         // Verify the key is actually gone
         let get_result = store.get("delete_me");
@@ -202,8 +225,9 @@ mod tests {
         // Try to delete a key that doesn't exist
         let result = store.delete("nonexistent");
 
-        // Should return None
-        assert!(result.is_none());
+        // Should return Ok(None)
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
     }
 
     #[test]
@@ -217,8 +241,10 @@ mod tests {
 
         // Delete one key
         let result = store.delete("key2");
-        assert!(result.is_some());
-        assert_eq!(result.unwrap(), "value2");
+        assert!(result.is_ok());
+        let deleted_value = result.unwrap();
+        assert!(deleted_value.is_some());
+        assert_eq!(deleted_value.unwrap(), "value2");
 
         // Verify other keys still exist
         assert_eq!(store.get("key1").unwrap(), "value1");
@@ -318,5 +344,59 @@ mod tests {
         assert!(MemoryStore::matches_pattern("", "*"));
         assert!(MemoryStore::matches_pattern("x", "*x"));
         assert!(MemoryStore::matches_pattern("x", "x*"));
+    }
+
+    #[test]
+    fn test_invalid_key_empty() {
+        let store = MemoryStore::new();
+
+        let result = store.get("");
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            StoreError::InvalidKey(msg) => assert_eq!(msg, "Key cannot be empty"),
+            _ => panic!("Expected InvalidKey error"),
+        }
+    }
+
+    #[test]
+    fn test_invalid_key_too_long() {
+        let mut store = MemoryStore::new();
+        let long_key = "a".repeat(513); // Over the 512 character limit
+
+        let result = store.set(long_key, "value".to_string());
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            StoreError::InvalidKey(msg) => assert_eq!(msg, "Key too long (max 512 characters)"),
+            _ => panic!("Expected InvalidKey error"),
+        }
+    }
+
+    #[test]
+    fn test_invalid_key_null_bytes() {
+        let mut store = MemoryStore::new();
+
+        let result = store.delete("key\0with\0nulls");
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            StoreError::InvalidKey(msg) => assert_eq!(msg, "Key cannot contain null bytes"),
+            _ => panic!("Expected InvalidKey error"),
+        }
+    }
+
+    #[test]
+    fn test_validation_applied_to_all_operations() {
+        let mut store = MemoryStore::new();
+        let invalid_key = ""; // Empty key
+
+        // Test GET
+        assert!(store.get(invalid_key).is_err());
+
+        // Test SET
+        assert!(store
+            .set(invalid_key.to_string(), "value".to_string())
+            .is_err());
+
+        // Test DELETE
+        assert!(store.delete(invalid_key).is_err());
     }
 }
