@@ -12,7 +12,13 @@ Orbit is a Redis-like key-value store that provides:
 
 ## Project Status
 
-🚧 **Early Development** - Currently implementing Milestone 1 (Basic CLI Store)
+✅ **Milestone 1 Complete** - Now implementing Milestone 2 (Persistent Single Node)
+
+**Current Features:**
+- Redis-like CLI commands (GET, SET, DEL, KEYS)
+- In-memory key-value storage with regex pattern matching
+- Comprehensive error handling and validation
+- Strict key validation (alphanumeric + dashes only)
 
 See [ROADMAP.md](ROADMAP.md) for detailed development progress and upcoming features.
 
@@ -40,8 +46,8 @@ cargo test
 ## Development Milestones
 
 - [x] **Milestone 0**: Project Setup
-- [ ] **Milestone 1**: Basic CLI Store (In Progress)
-- [ ] **Milestone 2**: Persistent Single Node
+- [x] **Milestone 1**: Basic CLI Store ✅
+- [ ] **Milestone 2**: Persistent Single Node (In Progress)
 - [ ] **Milestone 3**: Network-Aware Single Node
 - [ ] **Milestone 4**: Leader-Follower Replication
 - [ ] **Milestone 5**: Multi-Node Consensus (Raft)

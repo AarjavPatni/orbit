@@ -2,26 +2,26 @@
 
 Detailed task breakdown for building a distributed, fault-tolerant key-value store with CLI-demonstrable fault tolerance.
 
-## Milestone 1: Basic CLI Store (1-2 weeks)
+## Milestone 1: Basic CLI Store ✅ **COMPLETED**
 **Demo Goal**: Redis-like CLI commands work locally
 
-- [ ] **CLI Parser Implementation**
-  - [ ] Support GET, SET, DEL, KEYS commands from command line
-  - [ ] Handle command arguments and validation
-  - [ ] Display helpful error messages for invalid commands
-  - **Acceptance**: `./orbit set foo bar` and `./orbit get foo` work
+- [x] **CLI Parser Implementation**
+  - [x] Support GET, SET, DEL, KEYS commands from command line
+  - [x] Handle command arguments and validation
+  - [x] Display helpful error messages for invalid commands
+  - **Acceptance**: `./orbit set foo bar` and `./orbit get foo` work ✅
 
-- [ ] **In-Memory Store**
-  - [ ] Store key-value pairs in memory during session
-  - [ ] Handle basic string keys and values
-  - [ ] Return appropriate responses for each operation
-  - **Acceptance**: Data persists during single session, all operations work
+- [x] **In-Memory Store**
+  - [x] Store key-value pairs in memory during session
+  - [x] Handle basic string keys and values
+  - [x] Return appropriate responses for each operation
+  - **Acceptance**: Data persists during single session, all operations work ✅
 
-- [ ] **Basic Error Handling**
-  - [ ] Graceful handling of missing keys
-  - [ ] Clear error messages for malformed commands
-  - [ ] Proper exit codes for different scenarios
-  - **Acceptance**: Program doesn't crash on invalid input
+- [x] **Basic Error Handling**
+  - [x] Graceful handling of missing keys
+  - [x] Clear error messages for malformed commands
+  - [x] Proper exit codes for different scenarios
+  - **Acceptance**: Program doesn't crash on invalid input ✅
 
 ## Milestone 2: Persistent Single Node (1-2 weeks)
 **Demo Goal**: Data survives restarts
@@ -196,9 +196,9 @@ Detailed task breakdown for building a distributed, fault-tolerant key-value sto
 
 ## Progress Tracking
 
-- **Current Milestone**: 1 (Basic CLI Store)
-- **Next Demo**: CLI commands working locally
-- **Completed Milestones**: 0 (Project Setup)
+- **Current Milestone**: 2 (Persistent Single Node)
+- **Next Demo**: Data survives restarts
+- **Completed Milestones**: 1 (Basic CLI Store)
 
 ## Demo Schedule
 
