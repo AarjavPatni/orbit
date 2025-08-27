@@ -1,6 +1,11 @@
 use super::KeyValueStore;
 use crate::error::StoreError;
+use regex::Regex;
 use std::collections::HashMap;
+
+const REGEX_METACHARACTERS: &[char] = &[
+    '.', '*', '+', '?', '^', '$', '|', '[', ']', '(', ')', '{', '}', '\\',
+];
 
 /// Simple in-memory key-value store using HashMap
 ///
@@ -38,11 +43,17 @@ impl MemoryStore {
                 "Key too long (max 512 characters)".to_string(),
             ));
         }
-        if key.contains('\0') {
-            return Err(StoreError::InvalidKey(
-                "Key cannot contain null bytes".to_string(),
-            ));
+
+        // Only allow letters, numbers, and dashes
+        for ch in key.chars() {
+            if !ch.is_alphanumeric() && ch != '-' {
+                return Err(StoreError::InvalidKey(format!(
+                    "Key contains invalid character '{}'. Only letters, numbers, and dashes are allowed",
+                    ch
+                )));
+            }
         }
+
         Ok(())
     }
 
@@ -53,34 +64,15 @@ impl MemoryStore {
         // Think about: What are the different wildcard scenarios we need to handle?
         // Consider: How can we break down pattern matching into logical cases?
 
-        let wildcard_matches: Vec<_> = pattern.match_indices('*').map(|(idx, _)| idx).collect();
+        let should_auto_anchor =
+            |pattern: &str| -> bool { !pattern.chars().any(|c| REGEX_METACHARACTERS.contains(&c)) };
 
-        if wildcard_matches.len() == 1 {
-            let wildcard_loc = wildcard_matches[0];
-
-            if wildcard_loc == 0 {
-                let query: &str = &pattern[1..];
-                let query_matches: Vec<_> = key.match_indices(query).map(|(idx, _)| idx).collect();
-
-                if !query_matches.contains(&(key.len() - query.len())) {
-                    return false;
-                }
-            } else if wildcard_loc == pattern.len() - 1 {
-                let query: &str = &pattern[..pattern.len() - 1];
-                let query_matches: Vec<_> = key.match_indices(query).map(|(idx, _)| idx).collect();
-
-                if !query_matches.contains(&0) {
-                    return false;
-                }
-            } else {
-                // TODO: Implement logic for wildcards anywhere in the pattern
-                todo!()
-            }
-
-            true
+        if should_auto_anchor(pattern) {
+            pattern == key
         } else {
-            // TODO: Implement logic for multiple wildcards
-            todo!()
+            let re: Regex = Regex::new(pattern).unwrap();
+
+            re.is_match(key)
         }
     }
 }
@@ -110,7 +102,7 @@ impl KeyValueStore for MemoryStore {
         // Think about: How do we get all keys from our data structure?
         // Consider: How should pattern filtering work? When should we filter?
 
-        let pattern = pattern.unwrap_or("*");
+        let pattern = pattern.unwrap_or(".*");
         let mut matched_keys: Vec<String> = Vec::new();
 
         // TODO: Convert this to closure
@@ -132,11 +124,11 @@ mod tests {
     fn test_get_missing_key() {
         let store = MemoryStore::new();
 
-        let result = store.get("missing_key");
+        let result = store.get("missing-key");
 
         assert!(result.is_err());
         match result.unwrap_err() {
-            StoreError::KeyNotFound(key) => assert_eq!(key, "missing_key"),
+            StoreError::KeyNotFound(key) => assert_eq!(key, "missing-key"),
             _ => panic!("Expected KeyNotFound error"),
         }
     }
@@ -149,26 +141,26 @@ mod tests {
         // (We'll implement SET next, but for now let's test GET directly)
         store
             .data
-            .insert("test_key".to_string(), "test_value".to_string());
+            .insert("test-key".to_string(), "test-value".to_string());
 
-        let result = store.get("test_key");
+        let result = store.get("test-key");
 
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "test_value");
+        assert_eq!(result.unwrap(), "test-value");
     }
 
     #[test]
     fn test_set_new_key() {
         let mut store = MemoryStore::new();
 
-        let result = store.set("new_key".to_string(), "new_value".to_string());
+        let result = store.set("new-key".to_string(), "new-value".to_string());
 
         assert!(result.is_ok());
 
         // Verify the value was actually stored
-        let get_result = store.get("new_key");
+        let get_result = store.get("new-key");
         assert!(get_result.is_ok());
-        assert_eq!(get_result.unwrap(), "new_value");
+        assert_eq!(get_result.unwrap(), "new-value");
     }
 
     #[test]
@@ -177,18 +169,18 @@ mod tests {
 
         // Set initial value
         store
-            .set("update_key".to_string(), "initial_value".to_string())
+            .set("update-key".to_string(), "initial-value".to_string())
             .unwrap();
 
         // Update the value
-        let result = store.set("update_key".to_string(), "updated_value".to_string());
+        let result = store.set("update-key".to_string(), "updated-value".to_string());
 
         assert!(result.is_ok());
 
         // Verify the value was updated
-        let get_result = store.get("update_key");
+        let get_result = store.get("update-key");
         assert!(get_result.is_ok());
-        assert_eq!(get_result.unwrap(), "updated_value");
+        assert_eq!(get_result.unwrap(), "updated-value");
     }
 
     #[test]
@@ -197,11 +189,11 @@ mod tests {
 
         // Set up a key-value pair
         store
-            .set("delete_me".to_string(), "goodbye".to_string())
+            .set("delete-me".to_string(), "goodbye".to_string())
             .unwrap();
 
         // Delete the key
-        let result = store.delete("delete_me");
+        let result = store.delete("delete-me");
 
         // Should return Ok(Some(previous_value))
         assert!(result.is_ok());
@@ -210,10 +202,10 @@ mod tests {
         assert_eq!(deleted_value.unwrap(), "goodbye");
 
         // Verify the key is actually gone
-        let get_result = store.get("delete_me");
+        let get_result = store.get("delete-me");
         assert!(get_result.is_err());
         match get_result.unwrap_err() {
-            StoreError::KeyNotFound(key) => assert_eq!(key, "delete_me"),
+            StoreError::KeyNotFound(key) => assert_eq!(key, "delete-me"),
             _ => panic!("Expected KeyNotFound error"),
         }
     }
@@ -270,20 +262,20 @@ mod tests {
 
         // Add some test data
         store
-            .set("user:1".to_string(), "alice".to_string())
+            .set("user-1".to_string(), "alice".to_string())
             .unwrap();
-        store.set("user:2".to_string(), "bob".to_string()).unwrap();
+        store.set("user-2".to_string(), "bob".to_string()).unwrap();
         store
-            .set("session:abc".to_string(), "active".to_string())
+            .set("session-abc".to_string(), "active".to_string())
             .unwrap();
 
         let keys = store.keys(None);
 
         // Should return all 3 keys (order may vary due to HashMap)
         assert_eq!(keys.len(), 3);
-        assert!(keys.contains(&"user:1".to_string()));
-        assert!(keys.contains(&"user:2".to_string()));
-        assert!(keys.contains(&"session:abc".to_string()));
+        assert!(keys.contains(&"user-1".to_string()));
+        assert!(keys.contains(&"user-2".to_string()));
+        assert!(keys.contains(&"session-abc".to_string()));
     }
 
     #[test]
@@ -292,58 +284,59 @@ mod tests {
 
         // Add test data
         store
-            .set("user:1".to_string(), "alice".to_string())
+            .set("user-1".to_string(), "alice".to_string())
             .unwrap();
-        store.set("user:2".to_string(), "bob".to_string()).unwrap();
+        store.set("user-2".to_string(), "bob".to_string()).unwrap();
         store
-            .set("session:abc".to_string(), "active".to_string())
+            .set("session-abc".to_string(), "active".to_string())
             .unwrap();
 
-        // Test prefix pattern matching
-        let keys = store.keys(Some("user:*"));
+        // Test prefix pattern matching using regex
+        let keys = store.keys(Some("user.*"));
 
-        assert_eq!(keys.len(), 2); // Should only match user: prefixed keys
-        assert!(keys.contains(&"user:1".to_string()));
-        assert!(keys.contains(&"user:2".to_string()));
-        assert!(!keys.contains(&"session:abc".to_string()));
+        assert_eq!(keys.len(), 2); // Should only match user prefixed keys
+        assert!(keys.contains(&"user-1".to_string()));
+        assert!(keys.contains(&"user-2".to_string()));
+        assert!(!keys.contains(&"session-abc".to_string()));
     }
 
     #[test]
     fn test_matches_pattern_prefix_wildcard() {
-        // Test patterns like "user:*" - should match keys that start with "user:"
-        assert!(MemoryStore::matches_pattern("user:123", "user:*"));
-        assert!(MemoryStore::matches_pattern("user:alice", "user:*"));
-        assert!(MemoryStore::matches_pattern("user:", "user:*"));
-        assert!(!MemoryStore::matches_pattern("session:abc", "user:*"));
-        assert!(!MemoryStore::matches_pattern("admin:user:123", "user:*"));
+        // Test patterns like "^user-.*" - should match keys that start with "user-"
+        assert!(MemoryStore::matches_pattern("user-123", "^user-.*"));
+        assert!(MemoryStore::matches_pattern("user-alice", "^user-.*"));
+        assert!(MemoryStore::matches_pattern("user-", "^user-.*"));
+        assert!(!MemoryStore::matches_pattern("session-abc", "^user-.*"));
+        assert!(!MemoryStore::matches_pattern("admin-user-123", "^user-.*"));
     }
 
     #[test]
     fn test_matches_pattern_suffix_wildcard() {
-        // Test patterns like "*:123" - should match keys that end with ":123"
-        assert!(MemoryStore::matches_pattern("user:123", "*:123"));
-        assert!(MemoryStore::matches_pattern("session:123", "*:123"));
-        assert!(MemoryStore::matches_pattern(":123", "*:123"));
-        assert!(!MemoryStore::matches_pattern("user:456", "*:123"));
-        assert!(!MemoryStore::matches_pattern("user:123:extra", "*:123"));
+        // Test patterns like ".*-123$" - should match keys that end with "-123"
+        assert!(MemoryStore::matches_pattern("user-123", ".*-123$"));
+        assert!(MemoryStore::matches_pattern("session-123", ".*-123$"));
+        assert!(MemoryStore::matches_pattern("-123", ".*-123$"));
+        assert!(!MemoryStore::matches_pattern("user-456", ".*-123$"));
+        assert!(!MemoryStore::matches_pattern("user-123-extra", ".*-123$"));
     }
 
     #[test]
-    fn test_matches_pattern_exact_match() {
-        // When pattern has no wildcards, should match exactly
-        assert!(MemoryStore::matches_pattern("user:123", "*"));
-        assert!(MemoryStore::matches_pattern("any_key", "*"));
-        assert!(MemoryStore::matches_pattern("", "*"));
+    fn test_matches_pattern_match_all() {
+        // Pattern ".*" should match any key
+        assert!(MemoryStore::matches_pattern("user-123", ".*"));
+        assert!(MemoryStore::matches_pattern("any-key", ".*"));
+        assert!(MemoryStore::matches_pattern("", ".*"));
+        assert!(MemoryStore::matches_pattern("a", ".*"));
     }
 
     #[test]
     fn test_matches_pattern_edge_cases() {
-        // Empty strings and edge cases
-        assert!(MemoryStore::matches_pattern("test", "test*"));
-        assert!(MemoryStore::matches_pattern("test", "*test"));
-        assert!(MemoryStore::matches_pattern("", "*"));
-        assert!(MemoryStore::matches_pattern("x", "*x"));
-        assert!(MemoryStore::matches_pattern("x", "x*"));
+        // Empty strings and edge cases with proper regex
+        assert!(MemoryStore::matches_pattern("test", "test.*")); // test followed by anything
+        assert!(MemoryStore::matches_pattern("test", ".*test")); // anything followed by test
+        assert!(MemoryStore::matches_pattern("", ".*")); // empty matches .*
+        assert!(MemoryStore::matches_pattern("x", ".*x")); // anything followed by x
+        assert!(MemoryStore::matches_pattern("x", "x.*")); // x followed by anything
     }
 
     #[test]
@@ -378,7 +371,7 @@ mod tests {
         let result = store.delete("key\0with\0nulls");
         assert!(result.is_err());
         match result.unwrap_err() {
-            StoreError::InvalidKey(msg) => assert_eq!(msg, "Key cannot contain null bytes"),
+            StoreError::InvalidKey(msg) => assert!(msg.contains("invalid character")),
             _ => panic!("Expected InvalidKey error"),
         }
     }
@@ -398,5 +391,102 @@ mod tests {
 
         // Test DELETE
         assert!(store.delete(invalid_key).is_err());
+    }
+
+    #[test]
+    fn test_key_validation_invalid_characters() {
+        let mut store = MemoryStore::new();
+
+        // Test various invalid characters
+        let invalid_keys = vec![
+            "key:with:colons",
+            "key.with.dots",
+            "key with spaces",
+            "key@with@symbols",
+            "key/with/slashes",
+            "key_with_underscores",
+        ];
+
+        for key in invalid_keys {
+            let result = store.set(key.to_string(), "value".to_string());
+            assert!(result.is_err(), "Key '{}' should be invalid", key);
+            match result.unwrap_err() {
+                StoreError::InvalidKey(_) => {} // Expected
+                _ => panic!("Expected InvalidKey error for '{}'", key),
+            }
+        }
+    }
+
+    #[test]
+    fn test_key_validation_valid_characters() {
+        let mut store = MemoryStore::new();
+
+        // Test valid characters (letters, numbers, dashes)
+        let valid_keys = vec![
+            "user123",
+            "session-abc",
+            "test-key-123",
+            "ABC123",
+            "a",
+            "1",
+            "user-session-123",
+        ];
+
+        for key in valid_keys {
+            let result = store.set(key.to_string(), "value".to_string());
+            assert!(result.is_ok(), "Key '{}' should be valid", key);
+        }
+    }
+
+    #[test]
+    fn test_pattern_matching_exact_strings() {
+        // Test auto-anchoring for simple patterns (no regex metacharacters)
+        assert!(MemoryStore::matches_pattern("test", "test"));
+        assert!(MemoryStore::matches_pattern("user123", "user123"));
+        assert!(MemoryStore::matches_pattern("session-abc", "session-abc"));
+
+        // Should NOT match partial strings when auto-anchored
+        assert!(!MemoryStore::matches_pattern("test123", "test"));
+        assert!(!MemoryStore::matches_pattern("mytest", "test"));
+        assert!(!MemoryStore::matches_pattern("user1234", "user123"));
+    }
+
+    #[test]
+    fn test_pattern_matching_regex_patterns() {
+        // Test regex patterns (contains metacharacters, no auto-anchoring)
+        assert!(MemoryStore::matches_pattern("test123", "test.*"));
+        assert!(MemoryStore::matches_pattern("test", "test.*"));
+        assert!(MemoryStore::matches_pattern("testABC", "test.*"));
+
+        assert!(MemoryStore::matches_pattern("user1", "user\\d+"));
+        assert!(MemoryStore::matches_pattern("user123", "user\\d+"));
+        assert!(!MemoryStore::matches_pattern("userABC", "user\\d+"));
+
+        // Substring matching with regex (contains "prefix")
+        assert!(MemoryStore::matches_pattern(
+            "prefix-anything",
+            ".*prefix.*"
+        ));
+        assert!(MemoryStore::matches_pattern(
+            "anything-prefix-more",
+            ".*prefix.*"
+        ));
+    }
+
+    #[test]
+    fn test_pattern_matching_edge_cases() {
+        // Empty patterns and keys
+        assert!(MemoryStore::matches_pattern("", ""));
+        assert!(!MemoryStore::matches_pattern("test", ""));
+        assert!(!MemoryStore::matches_pattern("", "test"));
+
+        // Single characters
+        assert!(MemoryStore::matches_pattern("a", "a"));
+        assert!(!MemoryStore::matches_pattern("a", "b"));
+        assert!(MemoryStore::matches_pattern("abc", ".")); // . matches any single char
+
+        // Case sensitivity
+        assert!(!MemoryStore::matches_pattern("Test", "test"));
+        assert!(MemoryStore::matches_pattern("Test", "Test"));
     }
 }
