@@ -1,34 +1,36 @@
 # Orbit
 
-A distributed, fault-tolerant key-value store built in Rust with CLI-demonstrable fault tolerance.
+A distributed, encrypted file storage system that makes data resilient to failure, private, and accessible across a network of nodes.
 
 ## Overview
 
-Orbit is a Redis-like key-value store that provides:
-- **Distributed consensus** using the Raft algorithm
-- **Fault tolerance** with visible resilience demonstrations
-- **CLI-driven operations** for easy interaction and testing
-- **Multiple consensus approaches** (per-transaction vs. log-based)
+Orbit is a distributed file storage system that provides:
+- **File encryption and sharding** - Files split into encrypted pieces for privacy
+- **P2P networking** - Automatic node discovery and gossip-based coordination
+- **Fault tolerance** - Files remain accessible even when nodes fail
+- **Rich TUI interface** - Real-time visualization of network status and operations
 
 ## Project Status
 
-✅ **Milestone 1 Complete** - Now implementing Milestone 2 (Persistent Single Node)
+**Beginning Development** - Starting with Milestone 1 (Basic File Operations)
 
-**Current Features:**
-- Redis-like CLI commands (GET, SET, DEL, KEYS)
-- In-memory key-value storage with regex pattern matching
-- Comprehensive error handling and validation
-- Strict key validation (alphanumeric + dashes only)
+**Planned Features:**
+- File chunking with adaptive sizing (64KB/1MB/4MB based on file size)
+- Per-shard encryption for privacy and security
+- P2P node discovery using mDNS for local networks
+- Gossip protocols for distributed metadata coordination
+- Rich TUI with real-time progress and network status
+- Simple replication for fault tolerance
 
-See [ROADMAP.md](ROADMAP.md) for detailed development progress and upcoming features.
+See [ROADMAP.md](ROADMAP.md) for detailed development progress and milestone breakdown.
 
 ## Goals
 
-1. **Fault tolerance using CLI** - Visibly demonstrate resilience from command line
-2. **Consensus for data consistency** - Two approaches:
-   - Consensus for each transaction  
-   - Log using sequence numbers
-3. **CLI tool/query language** - Redis-inspired interface for data operations
+1. **Distributed file storage** - Store files as encrypted shards across multiple nodes
+2. **Privacy through encryption** - Per-shard encryption ensures data confidentiality  
+3. **P2P networking** - Automatic discovery and coordination without central authority
+4. **Fault tolerance** - Files remain accessible despite node failures
+5. **Rich user experience** - Visual progress tracking and real-time system insights
 
 ## Quick Start
 
@@ -36,8 +38,17 @@ See [ROADMAP.md](ROADMAP.md) for detailed development progress and upcoming feat
 # Build the project
 cargo build
 
-# Run locally
-cargo run
+# Start a storage node
+cargo run -- node --port 8001
+
+# Upload a file (from another terminal)
+cargo run -- upload myfile.txt
+
+# Check network status  
+cargo run -- status
+
+# Download the file
+cargo run -- download myfile.txt
 
 # Run tests
 cargo test
@@ -45,45 +56,49 @@ cargo test
 
 ## Development Milestones
 
-- [x] **Milestone 0**: Project Setup
-- [x] **Milestone 1**: Basic CLI Store ✅
-- [ ] **Milestone 2**: Persistent Single Node (In Progress)
-- [ ] **Milestone 3**: Network-Aware Single Node
-- [ ] **Milestone 4**: Leader-Follower Replication
-- [ ] **Milestone 5**: Multi-Node Consensus (Raft)
-- [ ] **Milestone 6**: Transaction-Level Consensus
-- [ ] **Milestone 7**: Advanced Fault Scenarios
-- [ ] **Milestone 8**: Production Features
+- [ ] **Milestone 1**: Basic File Operations - Local chunking, encryption, and storage
+- [ ] **Milestone 2**: Multi-Node Storage - Distribute files across multiple processes  
+- [ ] **Milestone 3**: P2P Discovery - Automatic node discovery via mDNS
+- [ ] **Milestone 4**: Basic TUI - Progress bars and status display
+- [ ] **Milestone 5**: Gossip Protocol - Distributed metadata coordination
+- [ ] **Milestone 6**: Fault Tolerance - Manual node recovery and file resilience
+- [ ] **Milestone 7**: Rich TUI Dashboard - Comprehensive network visualization
+- [ ] **Milestone 8**: Polish & Performance - Production readiness and optimization
 
 ## Architecture
 
 The project follows a modular design that evolves through milestones:
 
-1. **Single-node in-memory store** → Basic CLI operations
-2. **Persistence layer** → Append-only log with crash recovery
-3. **Network layer** → TCP server with custom protocol
-4. **Replication** → Leader-follower with basic failover
-5. **Consensus** → Full Raft implementation
-6. **Advanced features** → Performance optimization and production readiness
+1. **File operations** → Chunking, encryption, and local storage
+2. **Multi-node distribution** → Store shards across multiple processes
+3. **P2P networking** → Automatic discovery and peer communication
+4. **User interface** → Rich TUI with progress tracking and status
+5. **Distributed coordination** → Gossip protocols for metadata
+6. **Fault tolerance** → Redundancy and graceful failure handling
+7. **Advanced visualization** → Real-time network and file status
+8. **Production features** → Performance optimization and reliability
 
 ## Demo Scenarios
 
 Each milestone includes specific demonstrations:
-- **CLI Demo**: Local key-value operations
-- **Persistence Demo**: Data survives application restarts
-- **Network Demo**: Remote access from multiple clients
-- **Fault Tolerance Demo**: Kill processes, show automatic recovery
-- **Partition Demo**: Network splits with consistency maintenance
+- **File Operations**: Upload, chunk, encrypt, and reconstruct files locally
+- **Multi-Node Demo**: Store file across multiple processes, retrieve from any
+- **P2P Discovery**: Nodes automatically find each other on local network
+- **TUI Progress**: Visual upload/download progress with real-time status
+- **Gossip Demo**: Nodes share metadata about stored files
+- **Fault Tolerance**: Kill nodes, files remain accessible via other nodes
+- **Network Status**: Live dashboard showing node health and file distribution
 
 ## Documentation
 
+- [PROBLEM_STATEMENT.md](PROBLEM_STATEMENT.md) - Core problem and solution approach
 - [CLAUDE.md](CLAUDE.md) - Development guidance and commands
-- [ROADMAP.md](ROADMAP.md) - Detailed task breakdown and progress tracking
-- [project-description.md](project-description.md) - Original project concept
+- [ROADMAP.md](ROADMAP.md) - Detailed milestone breakdown and progress tracking
+- [project-description.md](project-description.md) - Project concept and vision
 
 ## Contributing
 
-This is a learning project focused on understanding distributed systems concepts. The milestone-driven approach ensures each feature is fully functional before moving to the next.
+This is a learning project focused on understanding distributed systems, P2P networking, and fault tolerance concepts. The milestone-driven approach ensures each feature is fully functional and demoable before moving to the next.
 
 ## License
 

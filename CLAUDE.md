@@ -1,20 +1,22 @@
 ## Project Overview
 
-Orbit is a distributed, fault-tolerant key-value store in Rust that can be driven entirely from a CLI, much like Redis but with built-in consensus for consistency across nodes. The project evolves in demoable milestones: starting with a single-node in-memory store, then layering on persistence, consensus (both per-transaction and replicated log approaches), and multiple transport backends.
+Orbit is a distributed, encrypted file storage system that splits files into shards and distributes them across multiple nodes for fault tolerance and privacy. The system uses P2P networking for node discovery and features a rich TUI interface that makes distributed systems concepts visible and engaging. The project evolves in demoable milestones: starting with basic file operations, then adding P2P discovery, gossip protocols, and comprehensive fault tolerance.
 
 ## Project Goals
-1. **Fault tolerance using CLI** - Visibly demonstrate resilience from command line
-2. **Consensus for data consistency** - Two approaches:
-   - Consensus for each transaction  
-   - Log using sequence numbers
-3. **CLI tool/query language** - Redis-inspired interface for data operations
+1. **Distributed file storage** - Store encrypted file shards across multiple nodes
+2. **P2P networking** - Automatic node discovery and gossip-based coordination
+3. **Rich TUI interface** - Visual progress tracking and real-time system status
+4. **Fault tolerance** - Files remain accessible even when nodes fail
+5. **Privacy through encryption** - Per-shard encryption protects data on storage nodes
 
 ## Essential Commands
 ```bash
 cargo check                              # Fast compile check (fastest)
 cargo test                               # Run all tests  
-cargo run                                # Run the CLI
-cargo run -- get mykey                   # Run with CLI args
+cargo run -- node --port 8001            # Start storage node
+cargo run -- upload myfile.txt           # Upload file to network
+cargo run -- download myfile.txt         # Download file from network  
+cargo run -- status                      # Show network and file status
 ```
 
 ### **MUST** Run Before Commit
@@ -43,15 +45,16 @@ cargo clippy --all-targets --all-features # Full lint check
 
 ### Error Handling Patterns
 ```rust
-// Prefer this pattern for the distributed store
-fn get_value(key: &str) -> Result<Option<String>, StoreError> {
+// Prefer this pattern for file operations
+fn upload_file(path: &Path) -> Result<FileId, StorageError> {
     // Implementation
 }
 
 // Chain results with ?
-fn complex_operation() -> Result<(), StoreError> {
-    let value = get_value("key")?;
-    validate_value(&value)?;
+fn distribute_shards() -> Result<(), StorageError> {
+    let shards = create_shards(&file_data)?;
+    encrypt_shards(&shards)?;
+    distribute_to_nodes(&encrypted_shards)?;
     Ok(())
 }
 ```
@@ -59,11 +62,11 @@ fn complex_operation() -> Result<(), StoreError> {
 ## Planned Architecture
 
 - `src/lib.rs` - Core library API
-- `src/store/` - Key-value store implementation  
-- `src/consensus/` - Raft and transaction consensus
-- `src/network/` - TCP server and wire protocol
-- `src/cli/` - Command-line interface
-- `tests/` - Integration tests for fault tolerance scenarios
+- `src/storage/` - File chunking, encryption, and shard management
+- `src/network/` - P2P networking, discovery, and gossip protocols  
+- `src/tui/` - Rich terminal user interface with real-time updates
+- `src/cli/` - Command-line interface for file operations
+- `tests/` - Integration tests for distributed storage scenarios
 
 
 ## **IMPORTANT** - Other Guidelines

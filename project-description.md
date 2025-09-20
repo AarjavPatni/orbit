@@ -1,10 +1,11 @@
 <idea>
-    A distributed, fault-tolerant key-value store in Rust that can be driven entirely from a CLI,
-    much like Redis but with built-in consensus for consistency across nodes. The project will 
-    evolve in demoable milestones: starting with a single-node in-memory store, then layering on 
-    persistence, consensus (both per-transaction and replicated log approaches), and multiple 
-    transport backends (goroutines, Unix sockets, TCP). The end goal is a system where you can 
-    visibly demonstrate fault tolerance from the command line—partitioning nodes, killing leaders, 
-    and still retrieving consistent data—while also experimenting with different designs for 
-    canonical state, all within a modular Rust workspace.
+    A distributed, encrypted file storage system in Rust that splits files into shards and 
+    distributes them across multiple nodes for fault tolerance and privacy. The system uses P2P 
+    networking for automatic node discovery and features a rich TUI interface that makes distributed 
+    systems concepts visible and engaging. The project evolves in demoable milestones: starting with 
+    basic file chunking and encryption, then adding multi-node distribution, P2P discovery via mDNS, 
+    gossip protocols for metadata coordination, and comprehensive fault tolerance. The end goal is a 
+    system where you can visibly demonstrate resilient file storage from the command line—killing 
+    storage nodes, watching network healing, and still retrieving files—while learning fundamental 
+    distributed systems and P2P networking concepts through an intuitive, visual interface.
 </idea>

@@ -1,213 +1,231 @@
 # Orbit Development Roadmap
 
-Detailed task breakdown for building a distributed, fault-tolerant key-value store with CLI-demonstrable fault tolerance.
+Detailed milestone breakdown for building a distributed, encrypted file storage system with P2P networking and rich TUI interface.
 
-## Milestone 1: Basic CLI Store ✅ **COMPLETED**
-**Demo Goal**: Redis-like CLI commands work locally
+## Milestone 1: Basic File Operations
+**Demo Goal**: Upload, chunk, encrypt, and reconstruct files locally
 
-- [x] **CLI Parser Implementation**
-  - [x] Support GET, SET, DEL, KEYS commands from command line
-  - [x] Handle command arguments and validation
-  - [x] Display helpful error messages for invalid commands
-  - **Acceptance**: `./orbit set foo bar` and `./orbit get foo` work ✅
+- [ ] **File Chunking**
+  - [ ] Implement adaptive chunk sizing (64KB/1MB/4MB based on file size)
+  - [ ] Handle edge cases (empty files, files smaller than chunk size)
+  - [ ] Efficient memory usage during chunking process
+  - **Acceptance**: `orbit upload test.txt` creates appropriately-sized chunks
 
-- [x] **In-Memory Store**
-  - [x] Store key-value pairs in memory during session
-  - [x] Handle basic string keys and values
-  - [x] Return appropriate responses for each operation
-  - **Acceptance**: Data persists during single session, all operations work ✅
+- [ ] **Per-Shard Encryption**
+  - [ ] Generate unique encryption keys for each shard
+  - [ ] Derive shard keys from master passphrase
+  - [ ] Secure key handling and storage
+  - **Acceptance**: Encrypted shards cannot be read without proper keys
 
-- [x] **Basic Error Handling**
-  - [x] Graceful handling of missing keys
-  - [x] Clear error messages for malformed commands
-  - [x] Proper exit codes for different scenarios
-  - **Acceptance**: Program doesn't crash on invalid input ✅
+- [ ] **Local File Reconstruction**
+  - [ ] Combine chunks back into original file
+  - [ ] Verify file integrity after reconstruction
+  - [ ] Handle missing or corrupted shards gracefully
+  - **Acceptance**: `orbit download test.txt` recreates original file perfectly
 
-## Milestone 2: Persistent Single Node (1-2 weeks)
-**Demo Goal**: Data survives restarts
+## Milestone 2: Multi-Node Storage
+**Demo Goal**: Files stored and retrieved across multiple processes
 
-- [ ] **Append-Only Log**
-  - [ ] Write operations to a log file
-  - [ ] Use human-readable format for debugging
-  - [ ] Ensure atomic writes
-  - **Acceptance**: Log file grows with each SET/DEL operation
+- [ ] **Basic Network Communication**
+  - [ ] TCP server for node-to-node communication
+  - [ ] Simple protocol for shard transfer
+  - [ ] Connection management and error handling
+  - **Acceptance**: Nodes can send shards to each other via TCP
 
-- [ ] **Log Replay on Startup**
-  - [ ] Read log file when program starts
-  - [ ] Rebuild in-memory state from log
-  - [ ] Handle corrupted entries gracefully
-  - **Acceptance**: Restart preserves all data from previous session
+- [ ] **Manual Node Configuration**
+  - [ ] Static configuration file with node addresses
+  - [ ] Load balancing across available nodes
+  - [ ] Handle node unavailability gracefully
+  - **Acceptance**: `orbit upload --nodes node1,node2,node3 file.txt` distributes shards
 
-- [ ] **Crash Recovery**
-  - [ ] Verify data integrity after unexpected shutdown
-  - [ ] Handle partial writes correctly
-  - [ ] Test with kill -9 scenarios
-  - **Acceptance**: No data loss even with kill -9
+- [ ] **Multi-Node Retrieval**
+  - [ ] Query multiple nodes for file shards
+  - [ ] Parallel shard downloading
+  - [ ] Reconstruct files from distributed shards
+  - **Acceptance**: Download file successfully from any participating node
 
-- [ ] **Log Compaction**
-  - [ ] Prevent log file from growing indefinitely
-  - [ ] Implement periodic cleanup
-  - [ ] Maintain data consistency during compaction
-  - **Acceptance**: Log size doesn't grow indefinitely with repeated operations
+- [ ] **Basic Replication**
+  - [ ] Store each shard on multiple nodes (2x replication)
+  - [ ] Handle node failures during upload
+  - [ ] Redundancy verification and reporting
+  - **Acceptance**: File remains accessible when one storage node goes offline
 
-## Milestone 3: Network-Aware Single Node (1-2 weeks)
-**Demo Goal**: Remote access to store
+## Milestone 3: P2P Discovery
+**Demo Goal**: Nodes automatically find each other on local network
 
-- [ ] **TCP Server**
-  - [ ] Listen on configurable port
-  - [ ] Accept incoming connections
-  - [ ] Handle connection errors gracefully
-  - **Acceptance**: `nc localhost 8080` connects successfully
+- [ ] **mDNS Service Discovery**
+  - [ ] Advertise storage service on local network
+  - [ ] Discover other nodes automatically
+  - [ ] Handle service registration and deregistration
+  - **Acceptance**: Nodes discover each other without manual configuration
 
-- [ ] **Wire Protocol**
-  - [ ] Define text-based communication protocol
-  - [ ] Parse commands from network clients
-  - [ ] Send responses back to clients
-  - **Acceptance**: Can send "SET foo bar" via netcat and get response
+- [ ] **Peer Management**
+  - [ ] Maintain list of active peers
+  - [ ] Handle peer connection and disconnection
+  - [ ] Periodic health checking of discovered peers
+  - **Acceptance**: `orbit status` shows all discovered nodes on network
 
-- [ ] **Concurrent Connections**
-  - [ ] Handle multiple clients simultaneously
-  - [ ] Prevent blocking between connections
-  - [ ] Clean up resources on disconnect
-  - **Acceptance**: 10+ simultaneous connections work without blocking
+- [ ] **Automatic Distribution**
+  - [ ] Upload files to discovered nodes without manual specification
+  - [ ] Intelligent peer selection for shard placement
+  - [ ] Fallback handling when preferred nodes unavailable
+  - **Acceptance**: `orbit upload file.txt` works without specifying target nodes
 
-- [ ] **Client Library**
-  - [ ] Create simple client for easier testing
-  - [ ] Handle connection and communication
-  - [ ] Provide clean API for operations
-  - **Acceptance**: Rust client can connect and perform all operations
+- [ ] **Local Network Testing**
+  - [ ] Multiple nodes running on same machine with different ports
+  - [ ] Verify discovery works across different terminals
+  - [ ] Test network partition and recovery scenarios
+  - **Acceptance**: Start 3 nodes in different terminals, they all discover each other
 
-## Milestone 4: Leader-Follower Replication (2-3 weeks)
-**Demo Goal**: Basic fault tolerance visible
+## Milestone 4: Basic TUI
+**Demo Goal**: Beautiful progress bars and real-time status
 
-- [ ] **Node Discovery**
-  - [ ] Nodes can find and connect to each other
-  - [ ] Configure peer lists
-  - [ ] Detect when peers are unavailable
-  - **Acceptance**: Nodes successfully establish connections
+- [ ] **Upload Progress Visualization**
+  - [ ] Show file chunking progress with progress bars
+  - [ ] Display encryption status for each shard
+  - [ ] Real-time upload progress to different nodes
+  - **Acceptance**: Upload shows beautiful step-by-step progress
 
-- [ ] **Log Replication**
-  - [ ] Leader forwards operations to followers
-  - [ ] Followers apply operations in correct order
-  - [ ] Handle network failures between nodes
-  - **Acceptance**: Operations on leader appear on followers
+- [ ] **Download Progress Visualization**
+  - [ ] Display peer discovery and shard location
+  - [ ] Show parallel download progress from multiple nodes
+  - [ ] Real-time decryption and reconstruction status
+  - **Acceptance**: Download shows detailed progress and node sources
 
-- [ ] **Leader Election**
-  - [ ] Ensure only one leader at a time
-  - [ ] Automatic failover when leader fails
-  - [ ] Clear distinction between leader and follower roles
-  - **Acceptance**: Kill leader, follower becomes new leader
+- [ ] **Basic Status Dashboard**
+  - [ ] List discovered nodes with connection status
+  - [ ] Show stored files and their replication status
+  - [ ] Display basic network health information
+  - **Acceptance**: `orbit status` shows clean, informative dashboard
 
-- [ ] **Write Safety**
-  - [ ] Only leader accepts write operations
-  - [ ] Followers reject writes with clear errors
-  - [ ] Prevent conflicting writes during leadership changes
-  - **Acceptance**: Only one node can accept writes at any time
+- [ ] **Async UI Updates**
+  - [ ] Non-blocking progress updates during operations
+  - [ ] Real-time status refreshing
+  - [ ] Responsive interface during long-running operations
+  - **Acceptance**: UI remains responsive during file operations
 
-## Milestone 5: Multi-Node Consensus (Raft) (2-3 weeks)
-**Demo Goal**: Partition tolerance demonstration
+## Milestone 5: Gossip Protocol
+**Demo Goal**: Nodes share information about stored files and network state
 
-- [ ] **Raft Elections**
-  - [ ] Implement robust leader election
-  - [ ] Use term numbers to prevent conflicts
-  - [ ] Handle split votes correctly
-  - **Acceptance**: Reliable leader election even with network delays
+- [ ] **Gossip Message Types**
+  - [ ] Node health and status announcements
+  - [ ] File shard location advertisements
+  - [ ] Network topology updates
+  - **Acceptance**: Nodes exchange metadata about stored files
 
-- [ ] **Raft Log Replication**
-  - [ ] Ensure log consistency across all nodes
-  - [ ] Handle log conflicts properly
-  - [ ] Implement proper commitment rules
-  - **Acceptance**: All nodes have identical committed logs
+- [ ] **Gossip Propagation**
+  - [ ] Periodic gossip rounds with random peers
+  - [ ] Efficient message spreading across network
+  - [ ] Handle duplicate and stale information
+  - **Acceptance**: Information spreads to all nodes within reasonable time
 
-- [ ] **Cluster Membership**
-  - [ ] Support 3+ node clusters
-  - [ ] Handle node failures gracefully
-  - [ ] Maintain consensus with majority online
-  - **Acceptance**: 3+ node cluster maintains consistency
+- [ ] **Distributed File Metadata**
+  - [ ] Nodes know which files exist in the network
+  - [ ] Track shard locations across multiple nodes
+  - [ ] Handle metadata inconsistencies gracefully
+  - **Acceptance**: Any node can locate and retrieve any stored file
 
-- [ ] **Partition Testing**
-  - [ ] Simulate network partitions
-  - [ ] Verify consistency is maintained
-  - [ ] Test partition healing scenarios
-  - **Acceptance**: Network partition demo shows proper behavior
+- [ ] **Network State Convergence**
+  - [ ] Eventual consistency of network view
+  - [ ] Handle node joins and departures
+  - [ ] Detect and resolve conflicting information
+  - **Acceptance**: Network reaches consistent state after changes
 
-## Milestone 6: Transaction-Level Consensus (2-3 weeks)
-**Demo Goal**: Compare consensus approaches
+## Milestone 6: Fault Tolerance
+**Demo Goal**: Manual node recovery and file resilience
 
-- [ ] **Per-Transaction Consensus**
-  - [ ] Implement consensus for individual operations
-  - [ ] Maintain safety properties
-  - [ ] Measure performance characteristics
-  - **Acceptance**: Each operation gets individual consensus
+- [ ] **Node Failure Detection**
+  - [ ] Detect when nodes become unresponsive
+  - [ ] Update network topology when nodes disappear
+  - [ ] Handle graceful and ungraceful shutdowns
+  - **Acceptance**: Network adapts when nodes are killed or disconnected
 
-- [ ] **Performance Comparison**
-  - [ ] Compare both consensus approaches
-  - [ ] Measure latency and throughput
-  - [ ] Document trade-offs
-  - **Acceptance**: Clear performance comparison data
+- [ ] **File Availability During Failures**
+  - [ ] Retrieve files from remaining replicas when nodes fail
+  - [ ] Reroute requests to available nodes automatically
+  - [ ] Report degraded file status when replication reduced
+  - **Acceptance**: Files remain downloadable even after killing storage nodes
 
-- [ ] **Runtime Configuration**
-  - [ ] Switch between consensus approaches
-  - [ ] Maintain data consistency during switches
-  - [ ] Provide clean configuration interface
-  - **Acceptance**: Can toggle between approaches without data loss
+- [ ] **Manual Node Recovery**
+  - [ ] Nodes rejoin network after restart
+  - [ ] Synchronize with current network state via gossip
+  - [ ] Restore replication levels after recovery
+  - **Acceptance**: Restarted nodes seamlessly rejoin and restore full replication
 
-## Milestone 7: Advanced Fault Scenarios (2-3 weeks)
-**Demo Goal**: Comprehensive fault tolerance
+- [ ] **Fault Tolerance Demonstration**
+  - [ ] Kill nodes during file operations and show continued functionality
+  - [ ] Demonstrate file retrieval with partial node availability
+  - [ ] Show network healing and replication restoration
+  - **Acceptance**: Compelling demo of system resilience to node failures
 
-- [ ] **Dynamic Membership**
-  - [ ] Add nodes to running cluster
-  - [ ] Remove nodes safely
-  - [ ] Handle rapid membership changes
-  - **Acceptance**: Add/remove nodes without service interruption
+## Milestone 7: Rich TUI Dashboard
+**Demo Goal**: Comprehensive real-time network and file visualization
 
-- [ ] **Complex Partition Recovery**
-  - [ ] Handle minority partition scenarios
-  - [ ] Resolve split-vote situations
-  - [ ] Detect and respond to network healing
-  - **Acceptance**: Recovery from complex partition scenarios
+- [ ] **Advanced Node Status Display**
+  - [ ] Live node health monitoring with ping times
+  - [ ] Storage capacity and usage visualization
+  - [ ] Network topology graph or tree view
+  - **Acceptance**: Detailed node status with real-time updates
 
-- [ ] **Automated Fault Testing**
-  - [ ] Inject faults automatically
-  - [ ] Verify consistency under faults
-  - [ ] Measure performance degradation
-  - **Acceptance**: Automated fault injection with consistency verification
+- [ ] **File Health Monitoring**
+  - [ ] Replication status for each stored file
+  - [ ] Shard distribution across nodes
+  - [ ] File integrity and availability indicators
+  - **Acceptance**: Clear visualization of file health and distribution
 
-## Milestone 8: Production Features (1-2 weeks)
-**Demo Goal**: Ready for real use
+- [ ] **Real-time Network Activity**
+  - [ ] Live gossip message flow visualization
+  - [ ] Upload/download activity tracking
+  - [ ] Network bandwidth and performance metrics
+  - **Acceptance**: Watch network activity in real-time during operations
 
-- [ ] **Observability**
-  - [ ] Add metrics endpoint
-  - [ ] Implement structured logging
-  - [ ] Provide key performance indicators
-  - **Acceptance**: Monitoring dashboard shows system health
+- [ ] **Interactive Dashboard Features**
+  - [ ] Click/select nodes for detailed information
+  - [ ] Filter and search stored files
+  - [ ] Export network status and logs
+  - **Acceptance**: Rich, interactive interface for network management
 
-- [ ] **Configuration Management**
-  - [ ] Support configuration files
-  - [ ] Allow environment variable overrides
-  - [ ] Validate configuration on startup
-  - **Acceptance**: Flexible configuration without code changes
+## Milestone 8: Polish & Performance
+**Demo Goal**: Production readiness and optimization
+
+- [ ] **Error Handling & Recovery**
+  - [ ] Comprehensive error handling for all failure modes
+  - [ ] Graceful degradation when nodes are unreachable
+  - [ ] User-friendly error messages and recovery suggestions
+  - **Acceptance**: System handles edge cases gracefully with clear feedback
 
 - [ ] **Performance Optimization**
-  - [ ] Profile and optimize hot paths
-  - [ ] Reduce memory usage
-  - [ ] Minimize operation latency
-  - **Acceptance**: Measurable performance improvements
+  - [ ] Profile and optimize file transfer speeds
+  - [ ] Efficient memory usage during large file operations
+  - [ ] Minimize network overhead and latency
+  - **Acceptance**: Measurable performance improvements and efficient resource usage
+
+- [ ] **Configuration & Usability**
+  - [ ] Configuration files for node settings and network parameters
+  - [ ] Command-line help and usage documentation
+  - [ ] Logging and debugging capabilities
+  - **Acceptance**: Easy to configure and troubleshoot
+
+- [ ] **Final Integration Testing**
+  - [ ] End-to-end testing with multiple files and nodes
+  - [ ] Stress testing with large files and many operations
+  - [ ] Long-running stability testing
+  - **Acceptance**: Robust system ready for real-world usage
 
 ## Progress Tracking
 
-- **Current Milestone**: 2 (Persistent Single Node)
-- **Next Demo**: Data survives restarts
-- **Completed Milestones**: 1 (Basic CLI Store)
+- **Current Milestone**: 1 (Basic File Operations)
+- **Next Demo**: Upload, chunk, encrypt, and reconstruct files locally
+- **Completed Milestones**: None (starting fresh with file storage focus)
 
 ## Demo Schedule
 
 Each milestone should conclude with a working demonstration:
-- **Milestone 1**: Show CLI commands working locally
-- **Milestone 2**: Restart application, data still there
-- **Milestone 3**: Connect from multiple terminals
-- **Milestone 4**: Kill leader, show failover
-- **Milestone 5**: Network partition demonstration
-- **Milestone 6**: Performance comparison demo
-- **Milestone 7**: Complex fault tolerance scenarios
-- **Milestone 8**: Production deployment demo
+- **Milestone 1**: Upload file, show chunking/encryption, download and verify
+- **Milestone 2**: Store file across multiple processes, retrieve from any node
+- **Milestone 3**: Start nodes, watch them discover each other automatically
+- **Milestone 4**: Beautiful TUI showing upload/download progress in real-time
+- **Milestone 5**: Nodes gossiping metadata, files discoverable network-wide
+- **Milestone 6**: Kill storage nodes, files still accessible via remaining nodes
+- **Milestone 7**: Rich dashboard showing live network activity and file status
+- **Milestone 8**: Comprehensive system stress test and performance showcase
