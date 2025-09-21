@@ -96,10 +96,3 @@ Each milestone includes specific demonstrations:
 - [ROADMAP.md](ROADMAP.md) - Detailed milestone breakdown and progress tracking
 - [project-description.md](project-description.md) - Project concept and vision
 
-## Contributing
-
-This is a learning project focused on understanding distributed systems, P2P networking, and fault tolerance concepts. The milestone-driven approach ensures each feature is fully functional and demoable before moving to the next.
-
-## License
-
-MIT License - see LICENSE file for details
