@@ -1,3 +1,4 @@
+use std::cmp;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Error;
@@ -27,7 +28,7 @@ impl Iterator for ChunkIterator {
         /*
         Q. Why casted to usize? Does this mean that half the bits will be truncated upon a large value of chunk_size?
         A. No, I won't hit the limits because the max chunk size I'm using is 4MB, which is well within the limits of 32-bit systems.
-         */
+        */
 
         // TODO: Understand the limits of 32-bit systems. Prompt: "Explain 32-bit vs 64-bit memory addressing and why 32-bit systems have a 4GB RAM limit per process"
 
@@ -56,7 +57,12 @@ pub fn chunk_file(filepath: &str) -> Result<ChunkIterator, Error> {
             let file_size = f.metadata()?.size();
             let chunk_size: u64;
 
-            if file_size < 1 * MB {
+            if file_size < 64 * KB {
+                if file_size == 0 {
+                    return Err(Error::new(std::io::ErrorKind::InvalidInput, "Empty file"));
+                }
+                chunk_size = file_size;
+            } else if file_size < 1 * MB {
                 chunk_size = 64 * KB;
             } else if file_size < 100 * MB {
                 chunk_size = 1 * MB;
