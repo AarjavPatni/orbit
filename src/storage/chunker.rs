@@ -36,12 +36,20 @@ impl Iterator for ChunkIterator {
         self.current_index += 1;
 
         match self.file_reader.read(&mut chunk_data_vec) {
-            Ok(_data) => Some(Chunk {
-                data: chunk_data_vec,
-                // TODO: Use the correct metadata path
-                metadata_path: "".to_string(),
-                index: self.current_index,
-            }),
+            Ok(0) => {
+                // ? How does returning None ensure that the iterator stops returning more chunks?
+                None
+            }
+            Ok(bytes_read) => {
+                chunk_data_vec.truncate(bytes_read);
+
+                Some(Chunk {
+                    data: chunk_data_vec,
+                    // TODO: Use the correct metadata path
+                    metadata_path: "".to_string(),
+                    index: self.current_index,
+                })
+            }
 
             Err(e) => {
                 eprintln!("ERROR: Couldn't read from buffer. {}", e);
